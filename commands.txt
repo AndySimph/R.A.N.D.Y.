@@ -1,0 +1,10 @@
+Commands:
+
+:}help - Displays commands
+:}p (youtube url) - Plays youtube video in current voice channel
+:}skip - Skips current youtube video
+:}se (...) - Searches and displays first 10 videos on youtube to play
+:}kill - Kills R.A.N.D.Y.
+:}jojo - Outputs a random Jojo quote
+:}purge - Deletes messages in bulk
+:}hook (...) - Uses the webhook to send messages
