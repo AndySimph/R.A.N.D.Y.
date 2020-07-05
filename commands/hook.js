@@ -1,5 +1,5 @@
 //Hook commands
-exports.run = (bot, message, args, func) => {
+exports.run = (bot, message, args, ops, func) => {
   //Delete user message
   message.delete();
 

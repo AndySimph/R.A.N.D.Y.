@@ -2,7 +2,7 @@
 //Libraries
 const fs = require('fs')
 
-exports.run = (bot, message, args, func) => {
+exports.run = (bot, message, args, ops, func) => {
   //sete the jojoquotes.txt as a var
   var jojo = `./jojoquotes.txt`;
 

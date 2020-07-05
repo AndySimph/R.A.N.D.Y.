@@ -1,13 +1,6 @@
 //play command
-exports.run = (bot, message, args, func) => {
+exports.run = (bot, message, args, ops, func) => {
 
-  func.play(bot, message, args, func);
+  func.p(bot, message, args, ops, func);
 
 }
-
-// //play command
-// exports.run = (bot, message, args, serverQueue, queue, func) => {
-//
-//   func.execute(message, serverQueue, queue, func);
-//
-// }

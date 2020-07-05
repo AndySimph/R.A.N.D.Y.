@@ -117,74 +117,8 @@ module.exports = {
     })
   },
 
-  // Old play command
-  // execute: async function(message, serverQueue, queue, func) {
-  //   const args = message.content.split(" ");
-  //   const voiceChannel = message.member.voice.channel;
-  //   if (!voiceChannel)
-  //     return message.channel.send("You need to be in a voice channel to play music!");
-  //   const permissions = voiceChannel.permissionsFor(message.client.user);
-  //   if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-  //     return message.channel.send(
-  //       "I need the permissions to join and speak in your voice channel!"
-  //     );
-  //   }
-  //
-  //   const songInfo = await ytdl.getInfo(args[1]);
-  //   const song = {
-  //     title: songInfo.title,
-  //     url: songInfo.video_url
-  //   };
-  //
-  //   if (!serverQueue) {
-  //     const queueContruct = {
-  //       textChannel: message.channel,
-  //       voiceChannel: voiceChannel,
-  //       connection: null,
-  //       songs: [],
-  //       volume: 5,
-  //       playing: true
-  //     };
-  //
-  //     queue.set(message.guild.id, queueContruct);
-  //     queueContruct.songs.push(song);
-  //
-  //     try {
-  //       var connection = await voiceChannel.join();
-  //       queueContruct.connection = connection;
-  //       func.play(message, message.guild, queueContruct.songs[0], queue, func);
-  //     } catch (err) {
-  //       console.log(err);
-  //       queue.delete(message.guild.id);
-  //       return message.channel.send(err);
-  //     }
-  //   } else {
-  //     serverQueue.songs.push(song);
-  //     return message.channel.send(`${song.title} has been added to the queue!`);
-  //   }
-  // },
-  //
-  // play: function(message, guild, song, queue, func) {
-  //   const serverQueue = queue.get(guild.id);
-  //   if (!song) {
-  //     serverQueue.voiceChannel.leave();
-  //     queue.delete(guild.id);
-  //     return;
-  //   }
-  //
-  //   const dispatcher = serverQueue.connection
-  //     .play(ytdl(song.url))
-  //     .on("finish", () => {
-  //       serverQueue.songs.shift();
-  //       func.play(message, guild, serverQueue.songs[0], queue, func);
-  //     })
-  //     .on("error", error => console.error(error));
-  //   dispatcher.setVolumeLogarithmic(serverQueue.volume / 10);
-  //   func.hook(message.channel, "Note.bot", `Start playing: **${song.title}**`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
-  // },
-
   //Play command
-  play: async function(bot, message, args, func) {
+  p: async function(bot, message, args, ops, func) {
     //variable
     const voiceChannel = message.member.voice.channel;
 
@@ -192,11 +126,12 @@ module.exports = {
     if (!voiceChannel) {
       return message.channel.send("You need to be in a voice channel to play music!");
     }
-    if (message.guild.me.voiceChannel) {
-      return message.channel.send('Sorry, the bot is already connected somewhere');
-    }
+    // if (message.guild.me.voiceChannel) {
+    //   return message.channel.send('Sorry, the bot is already connected somewhere');
+    // }
 
-    // const permissions = voiceChannel.permissionsFor(message.bot.user);
+    //Check if the bot has permission to join and speak
+    // const permissions = voiceChannel.permissionsFor(message.bot);
     // if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
     //   return message.channel.send("I need the permissions to join and speak in your voice channel!");
     // }
@@ -210,17 +145,76 @@ module.exports = {
       return message.channel.send('Please enter a valid url');
     }
 
-    //Get song info
+    // //Get song info
+    // let info = await ytdl.getInfo(args[0]);
+    //
+    // //Connect to voice channel
+    // var connection = await message.member.voice.channel.join();
+    //
+    // //Play the song
+    // let dispatcher = await connection.play(ytdl(args[0], { filter: 'audioonly' }));
+
     let info = await ytdl.getInfo(args[0]);
 
-    //Connect to voice channel
-    var connection = await message.member.voice.channel.join();
+    let data = ops.active.get(message.guild.id) || {};
 
-    //Play the song
-    let dispatcher = await connection.play(ytdl(args[0], { filter: 'audioonly' }));
+    if (!data.connection) {
+      data.connection = await message.member.voice.channel.join();
+    }
+
+    if (!data.queue) {
+      data.queue = [];
+    }
+
+    data.guildID = message.guild.id;
+
+    data.queue.push({
+      songTitle: info.title,
+      requester: message.author,
+      url: args[0],
+      announceChannel: message.channel.id
+    })
 
     //Output what is playing
-    func.hook(message.channel, "Note.bot", `Now playing: ${info.title}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+    if (!data.dispatcher) {
+      func.play(bot, message, ops, data, func);
+    } else {
+      func.hook(message.channel, "Note.bot", `Added to the queue: ${info.title} | Requested by: ${message.author}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+    }
+
+    ops.active.set(message.guild.id, data);
+  },
+
+  play: async function(bot, message, ops, data, func) {
+    func.hook(message.channel, "Note.bot", `Now playing: ${data.queue[0].songTitle} | Requested by: ${data.queue[0].requester}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+
+    data.dispatcher = await data.connection.play(ytdl(data.queue[0].url, {filter: 'audioonly'}));
+    data.dispatcher.guildID = data.guildID;
+
+    data.dispatcher.once('finish', function() {
+      func.finish(bot, message, ops, this, func);
+    })
+  },
+
+  finish: function(bot, message, ops, dispatcher, func) {
+    let fetched = ops.active.get(dispatcher.guildID);
+
+    fetched.queue.shift();
+
+    if (fetched.queue.length > 0) {
+      ops.active.set(dispatcher.guildID, fetched);
+
+      func.play(bot, message, ops, fetched, func);
+    } else {
+      ops.active.delete(dispatcher.guildID);
+
+      let vc = bot.guilds.cache.get(dispatcher.guildID).voice.channel;
+
+      if (vc) {
+        vc.leave();
+        func.hook(message.channel, "Note.bot", `Now leaving`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+      }
+    }
   },
 
   //Kill command
@@ -240,7 +234,7 @@ module.exports = {
 
     message.guild.me.voice.channel.leave();
 
-    func.hook(message.channel, "Note.bot", `Now leaving`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+    func.hook(message.channel, "Note.bot", `Now leaving, Bye`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 
   }
 
