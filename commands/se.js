@@ -23,13 +23,14 @@ exports.run = (bot, message, args, ops, func) => {
     //Output list of available videos
     func.hook(message.channel, "Note.bot", resp, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 
+    //Filter options to numbers and create the collector
     const filter = m => !isNaN(m.content) && m.content < videos.length+1 && m.content > 0;
     const collector = message.channel.createMessageCollector(filter);
 
+    //Call the collector
     collector.videos = videos;
     collector.once('collect', function(m) {
-      // let commandFile = require('./p.js');
-      // commandFile.run(bot, message, [this.videos[parseInt(m.content)-1].url], ops, func);
+      //Play selected video
       func.p(bot, message, [this.videos[parseInt(m.content)-1].url], ops, func);
     });
   });

@@ -17,10 +17,12 @@ exports.run = async (bot, message, args, ops, func) => {
     return;
   }
 
+  //Set the active
   ops.active.set(message.guild.id, fetched);
 
+  //Output to chat
   func.hook(message.channel, "Note.bot", `Song skipped!`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 
+  //return the dispatcher
   return fetched.dispatcher.emit('finish');
-
 }

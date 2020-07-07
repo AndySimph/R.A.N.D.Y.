@@ -1,6 +1,7 @@
 //Libraries
 const fs = require('fs')
 const ytdl = require('ytdl-core');
+const search = require('yt-search');
 
 module.exports = {
   //Ping function
@@ -133,9 +134,31 @@ module.exports = {
       func.hook(message.channel, "Note.bot", `Please enter a url`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
       return;
     }
+
+    //Check if the input is a url or not
     let validate = await ytdl.validateURL(args[0]);
     if (!validate) {
-      func.hook(message.channel, "Note.bot", `Please enter a valid url`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+      //Create pseudo Variable
+      var argStr = '';
+      for (var i in args) {
+        argStr += args[i] + ' ';
+      }
+
+      //Call search function
+      search(argStr, function(err, res) {
+        //Error statement
+        if(err) {
+          func.hook(message.channel, "Note.bot", "Uh-Oh", "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+          return;
+        }
+
+        //set videos and temp object
+        let videos = res.videos.slice(0,10);
+        var temp = [' '+videos[0].url+' '];
+
+        //Play first video found
+        func.p(bot, message, temp, ops, func);
+      });
       return;
     }
 
@@ -153,6 +176,7 @@ module.exports = {
       data.queue = [];
     }
 
+    //set data guild id to the messages guild id
     data.guildID = message.guild.id;
 
     //set song info in queue
@@ -175,11 +199,14 @@ module.exports = {
 
   //Play through queue function
   play: async function(bot, message, ops, data, func) {
+    //Output to discord
     func.hook(message.channel, "Note.bot", `Now playing: ${data.queue[0].songTitle} | Requested by: ${data.queue[0].requester}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 
+    //Connect and play
     data.dispatcher = await data.connection.play(ytdl(data.queue[0].url, {filter: 'audioonly'}));
     data.dispatcher.guildID = data.guildID;
 
+    //Call finish function once the video has finished
     data.dispatcher.once('finish', function() {
       func.finish(bot, message, ops, this, func);
     })
@@ -187,19 +214,26 @@ module.exports = {
 
   //Finish function
   finish: function(bot, message, ops, dispatcher, func) {
+    //Set fetched to the active queue
     let fetched = ops.active.get(dispatcher.guildID);
 
+    //Shift the queue
     fetched.queue.shift();
 
     if (fetched.queue.length > 0) {
+      //Set the queue to the next song
       ops.active.set(dispatcher.guildID, fetched);
 
+      //Call play fuction for next song
       func.play(bot, message, ops, fetched, func);
     } else {
+      //Delete current active in queue
       ops.active.delete(dispatcher.guildID);
 
+      //Set vc variable
       let vc = bot.guilds.cache.get(dispatcher.guildID).voice.channel;
 
+      //Leave vc if bot is still connected
       if (vc) {
         vc.leave();
         func.hook(message.channel, "Note.bot", `Now leaving`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
@@ -232,5 +266,4 @@ module.exports = {
     //Output message
     func.hook(message.channel, "Note.bot", `Now leaving, Bye`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
   }
-
 }
