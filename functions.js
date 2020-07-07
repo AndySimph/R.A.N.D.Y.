@@ -124,50 +124,38 @@ module.exports = {
 
     //Check if the user is in a voice channel and if the bot is a different voice channel
     if (!voiceChannel) {
-      return message.channel.send("You need to be in a voice channel to play music!");
+      func.hook(message.channel, "Note.bot", `You need to be in a voice channel to play music!`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+      return;
     }
-    // if (message.guild.me.voiceChannel) {
-    //   return message.channel.send('Sorry, the bot is already connected somewhere');
-    // }
-
-    //Check if the bot has permission to join and speak
-    // const permissions = voiceChannel.permissionsFor(message.bot);
-    // if (!permissions.has("CONNECT") || !permissions.has("SPEAK")) {
-    //   return message.channel.send("I need the permissions to join and speak in your voice channel!");
-    // }
 
     //Check if it is a valid url
     if (!args[0]) {
-      return message.channel.send('Please enter a url');
+      func.hook(message.channel, "Note.bot", `Please enter a url`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+      return;
     }
     let validate = await ytdl.validateURL(args[0]);
     if (!validate) {
-      return message.channel.send('Please enter a valid url');
+      func.hook(message.channel, "Note.bot", `Please enter a valid url`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+      return;
     }
 
-    // //Get song info
-    // let info = await ytdl.getInfo(args[0]);
-    //
-    // //Connect to voice channel
-    // var connection = await message.member.voice.channel.join();
-    //
-    // //Play the song
-    // let dispatcher = await connection.play(ytdl(args[0], { filter: 'audioonly' }));
-
+    //get song info
     let info = await ytdl.getInfo(args[0]);
 
+    //Set data
     let data = ops.active.get(message.guild.id) || {};
 
+    //Check connection and queue
     if (!data.connection) {
       data.connection = await message.member.voice.channel.join();
     }
-
     if (!data.queue) {
       data.queue = [];
     }
 
     data.guildID = message.guild.id;
 
+    //set song info in queue
     data.queue.push({
       songTitle: info.title,
       requester: message.author,
@@ -185,6 +173,7 @@ module.exports = {
     ops.active.set(message.guild.id, data);
   },
 
+  //Play through queue function
   play: async function(bot, message, ops, data, func) {
     func.hook(message.channel, "Note.bot", `Now playing: ${data.queue[0].songTitle} | Requested by: ${data.queue[0].requester}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 
@@ -196,6 +185,7 @@ module.exports = {
     })
   },
 
+  //Finish function
   finish: function(bot, message, ops, dispatcher, func) {
     let fetched = ops.active.get(dispatcher.guildID);
 
@@ -218,7 +208,11 @@ module.exports = {
   },
 
   //Kill command
-  kill: function(bot, message, args, func) {
+  kill: function(bot, message, args, ops, func) {
+
+    //Clear the queue
+    ops.active.clear();
+
     //variable
     const voiceChannel = message.member.voice.channel;
 
@@ -232,10 +226,11 @@ module.exports = {
       return message.channel.send('You are not in the channel as the bot');
     }
 
+    //Leave Channel
     message.guild.me.voice.channel.leave();
 
+    //Output message
     func.hook(message.channel, "Note.bot", `Now leaving, Bye`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
-
   }
 
 }

@@ -1,9 +1,9 @@
-exports.run = async (bot, message, args, ops, func) => {
-  //Delete user message
-  message.delete();
-
+exports.run = (bot, message, args, ops, func) => {
   //Variables
   let fetched = ops.active.get(message.guild.id);
+
+  //Delete user message
+  message.delete();
 
   //Check if there is any music playing
   if (!fetched) {
@@ -17,10 +17,13 @@ exports.run = async (bot, message, args, ops, func) => {
     return;
   }
 
-  ops.active.set(message.guild.id, fetched);
+  //Check if the music has been paused already
+  if (fetched.dispatcher.paused) {
+    func.hook(message.channel, "Note.bot", `Music is already paused`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
+    return;
+  }
 
-  func.hook(message.channel, "Note.bot", `Song skipped!`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
-
-  return fetched.dispatcher.emit('finish');
-
+  //Pause the music
+  fetched.dispatcher.pause();
+  func.hook(message.channel, "Note.bot", `${fetched.queue[0].songTitle} has been paused`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
 }

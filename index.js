@@ -14,7 +14,6 @@ const active = new Map();
 bot.on('message', message => {
 
   //Variables
-  let msg = message.content.toUpperCase();
   let sender = message.author;
   let args = message.content.slice(prefix.length).trim().split(" ");
   let cmd = args.shift().toLowerCase();
@@ -29,11 +28,13 @@ bot.on('message', message => {
 
   //Command Handler
   try {
+    //Set Options
     let ops = {
       ownerID: ownerID,
       active: active
     }
 
+    //Set Command handler
     let commandFile = require(`./commands/${cmd}.js`);
     commandFile.run(bot, message, args, ops, func);
   } catch(e) {

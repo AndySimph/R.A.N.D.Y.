@@ -1,6 +1,8 @@
 //kill command
 exports.run = (bot, message, args, ops, func) => {
+  //Delete user message
+  message.delete();
 
-  func.kill(bot, message, args, func);
-
+  //Call kill function
+  func.kill(bot, message, args, ops, func);
 }

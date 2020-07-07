@@ -2,6 +2,9 @@ Commands:
 
 :}help - Displays commands
 :}p (youtube url) - Plays youtube video in current voice channel
+:}pause - Pauses current song
+:}Resume - Resumes the paused song
+:}vol (0-200) - Sets current volume
 :}skip - Skips current youtube video
 :}se (...) - Searches and displays first 10 videos on youtube to play
 :}kill - Kills R.A.N.D.Y.
