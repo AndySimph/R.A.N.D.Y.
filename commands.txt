@@ -7,6 +7,7 @@ Commands:
 :}vol (0-200) - Sets current volume
 :}skip - Skips current youtube video
 :}se (...) - Searches and displays first 10 videos on youtube to play
+:}queue - Displays the queue
 :}kill - Kills R.A.N.D.Y.
 :}jojo - Outputs a random Jojo quote
 :}purge - Deletes messages in bulk

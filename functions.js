@@ -2,6 +2,8 @@
 const fs = require('fs')
 const ytdl = require('ytdl-core');
 const search = require('yt-search');
+const ytpl = require('ytpl');
+
 
 module.exports = {
   //Ping function
@@ -189,6 +191,7 @@ module.exports = {
 
     //Output what is playing
     if (!data.dispatcher) {
+      console.log(data.queue);
       func.play(bot, message, ops, data, func);
     } else {
       func.hook(message.channel, "Note.bot", `Added to the queue: ${info.title} | Requested by: ${message.author}`, "14DBCE", "https://cdn.iconscout.com/icon/free/png-512/music-note-1-461900.png");
